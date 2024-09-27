@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <title><%= fish.name %>></title>
+  </head>
+  <body>
+    <h1><%= fish.name %></h1>
+    <% if (fish.temperature >= 20) { %>
+        <p>This fish needs temperatures over 20 degrees Celsius, so you may need a heater</p>
+    <% } else { %>
+        <p>This fish is happy at normal room temperature.</p>
+    <% } %>
+    <% if (fish.isCarnivorous) { %>
+        <p>Be careful, it may eat its tankmates!</p>
+    <% } else { %>
+        <p>It should be safe to stock with other fish.</p>
+    <% } %>
+    <a href="/fish">Back to fish</a>
+  </body>
+</html>

@@ -5,7 +5,6 @@ require('dotenv/config')
 
 // ! -- Variables
 
-
 const app = express()
 const port = 3000
 
@@ -33,9 +32,8 @@ app.post('/fish', async (req, res) => {
             req.body.isCarnivorous = false
         }
         req.body.temperature = Number(req.body.temperature)
-        const aFish = await Fish.create(req.body)
-        console.log(aFish)
-        res.redirect('/fish/new')
+        await Fish.create(req.body)
+        return res.redirect('/fish')
     } catch (error) {
         console.log(error)
         return res.status(500).send('An error occurred')
@@ -50,10 +48,36 @@ app.get('/', async (req, res) => {
     res.render('index')
 })
 
+//Index page
+app.get('/fish', async (req, res) => {
+    try {
+        const allFish = await Fish.find()
+        console.log(allFish)
+        return res.render('fish/index', {
+            fish: allFish
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('<h1>An error occurred</h1>')
+    }
+})
+
 //New page (form page)
 app.get('/fish/new', (req, res) => {
     res.render('fish/new')
 })
+
+//Show page
+app.get('/fish/:fishId', async (req, res) => {
+    try {
+        const foundFish = await Fish.findById(req.params.fishId)
+        res.render('fish/show', { fish: foundFish })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error occurred')        
+    }
+})
+
 
 // * -- Update
 
