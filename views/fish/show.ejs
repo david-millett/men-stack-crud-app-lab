@@ -9,7 +9,7 @@
   <body>
     <h1><%= fish.name %></h1>
     <% if (fish.temperature >= 20) { %>
-        <p>This fish needs temperatures over 20 degrees Celsius, so you may need a heater</p>
+        <p>This fish needs temperatures over 20 degrees Celsius, so you may need a heater.</p>
     <% } else { %>
         <p>This fish is happy at normal room temperature.</p>
     <% } %>
@@ -18,6 +18,10 @@
     <% } else { %>
         <p>It should be safe to stock with other fish.</p>
     <% } %>
+    <form action="/fish/<%= fish._id %>?_method=DELETE" method="POST">
+        <button type="submit">Delete <%= fish.name %></button>
+    </form>
+    <a href="/fish/<%= fish._id %>/edit">Edit <%= fish.name %></a>
     <a href="/fish">Back to fish</a>
   </body>
 </html>

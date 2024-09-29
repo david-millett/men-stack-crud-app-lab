@@ -1,11 +1,12 @@
 body {
-    background: #85cdf2;
+    background: #4fb4e7;
     font-family: "DM Sans", sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     max-width: 100vw;
+    color: white
   }
   
   h1 {
@@ -33,6 +34,7 @@ body {
     border-radius: 20px;
     box-shadow: 5px 6px #f47b5b;
     margin: 20px 10px;
+    color: navy
   }
   
   .checkbox-div {

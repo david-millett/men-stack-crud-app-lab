@@ -1,6 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
 const mongoose = require('mongoose')
+const methodOverride = require('method-override')
 require('dotenv/config')
 
 // ! -- Variables
@@ -16,13 +17,13 @@ const Fish = require('./models/fish.js')
 
 app.use(express.urlencoded({ extended: false }))
 app.use(morgan('dev'))
+app.use(methodOverride('_method'))
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
 
-
 // ! -- Route handlers
 
-// * -- Create
+// * -- Create route
 
 app.post('/fish', async (req, res) => {
     try {
@@ -41,7 +42,7 @@ app.post('/fish', async (req, res) => {
     
 })
 
-// * -- Read
+// * -- Read routes
 
 //Landing page
 app.get('/', async (req, res) => {
@@ -68,25 +69,67 @@ app.get('/fish/new', (req, res) => {
 })
 
 //Show page
-app.get('/fish/:fishId', async (req, res) => {
+app.get('/fish/:fishId', async (req, res, next) => {
     try {
-        const foundFish = await Fish.findById(req.params.fishId)
-        res.render('fish/show', { fish: foundFish })
+        if (mongoose.Types.ObjectId.isValid(req.params.fishId)) {
+            const foundFish = await Fish.findById(req.params.fishId)
+            if (!foundFish) return next()
+            return res.render('fish/show', { fish: foundFish })
+        } else {
+            next()
+        }      
     } catch (error) {
         console.log(error)
-        return res.status(500).send('An error occurred')        
+        return res.status(500).send('<h1>An error occurred</h1>')        
+    }
+})
+
+//Edit page
+app.get('/fish/:fishId/edit', async (req, res) => {
+    try {
+        const foundFish = await Fish.findById(req.params.fishId)
+        return res.render('fish/edit', {
+            fish: foundFish
+        })
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error occurred')
     }
 })
 
 
-// * -- Update
 
-// * -- Delete
+// * -- Update route
+
+app.put('/fish/:fishId', async (req, res) => {
+    try {
+        req.body.isCarnivorous = !!req.body.isCarnivorous
+        req.body.temperature = Number(req.body.temperature)
+        const foundFish = await Fish.findByIdAndUpdate(req.params.fishId, req.body)
+        return res.redirect(`/fish/${req.params.fishId}`)
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error has occurred')
+    }
+})
+
+// * -- Delete route
+
+app.delete('/fish/:fishId', async (req, res) => {
+    try {
+        await Fish.findByIdAndDelete(req.params.fishId)
+        return res.redirect('/fish')
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error occurred')
+    }
+})
+
 
 // ! -- 404 error handlers
 
 app.get('*', (req, res) => {
-    return res.status(404).send('Page not found')
+    return res.status(404).render('404')
 })
 
 // ! -- Server connections

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="/stylesheets/style.css" />
+    <title>Edit <%= fish.name %></title>
+  </head>
+  <body>
+    <h1>Edit <%= fish.name %></h1>
+    <form action="/fish/<%= fish._id %>?_method=PUT" method="POST">
+        <label for="name">Name:</label>
+        <input type="text" name="name" id="name" value="<%= fish.name %>"/>
+        <label for="temperature">Preferred temperature (C):</label>
+        <input type="number" name="temperature" id="temperature" value="<%= fish.temperature %>"/>
+        <div class="checkbox-div">
+            <label for="isCarnivorous">Carnivorous:</label>
+            <input type="checkbox" name="isCarnivorous" id="isCarnivorous" <% if (fish.isCarnivorous) { %>checked<% } %> />
+        </div>
+            <button type="submit">Save changes</button>
+    </form>
+    <a href="/fish">Back to fish</a>
+  </body>
+</html>
