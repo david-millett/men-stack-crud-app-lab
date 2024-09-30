@@ -2,6 +2,7 @@ const express = require('express')
 const morgan = require('morgan')
 const mongoose = require('mongoose')
 const methodOverride = require('method-override')
+const session = require('express-session')
 require('dotenv/config')
 
 // ! -- Variables
@@ -13,6 +14,10 @@ const port = 3000
 
 const Fish = require('./models/fish.js')
 
+// * -- Routers/Controllers
+const fishRouter = require('./controllers/fish.js')
+const authRouter = require('./controllers/auth.js')
+
 // ! -- Middleware
 
 app.use(express.urlencoded({ extended: false }))
@@ -20,111 +25,35 @@ app.use(morgan('dev'))
 app.use(methodOverride('_method'))
 app.set('view engine', 'ejs')
 app.use(express.static('public'))
+app.use(
+    session({
+        secret: process.env.SESSION_SECRET,
+        resave: false,
+        saveUninitialized: true,
+    })
+)
 
 // ! -- Route handlers
 
-// * -- Create route
-
-app.post('/fish', async (req, res) => {
-    try {
-        if (req.body.isCarnivorous) {
-            req.body.isCarnivorous = true
-        } else {
-            req.body.isCarnivorous = false
-        }
-        req.body.temperature = Number(req.body.temperature)
-        await Fish.create(req.body)
-        return res.redirect('/fish')
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('An error occurred')
-    }
-    
+// * -- Landing page
+app.get('/', (req, res) => {
+    res.render('index', {
+        user: req.session.user
+    })
 })
 
-// * -- Read routes
-
-//Landing page
-app.get('/', async (req, res) => {
-    res.render('index')
-})
-
-//Index page
-app.get('/fish', async (req, res) => {
-    try {
-        const allFish = await Fish.find()
-        console.log(allFish)
-        return res.render('fish/index', {
-            fish: allFish
-        })
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('<h1>An error occurred</h1>')
+// * -- VIP fish shop
+app.get('/fish-shop', (req, res) => {
+    if (req.session.user) {
+        res.send(`${req.session.user.username}, check out our fish for sale!`)
+    } else {
+        res.send('Sorry, you need to register to view this content.')
     }
 })
 
-//New page (form page)
-app.get('/fish/new', (req, res) => {
-    res.render('fish/new')
-})
-
-//Show page
-app.get('/fish/:fishId', async (req, res, next) => {
-    try {
-        if (mongoose.Types.ObjectId.isValid(req.params.fishId)) {
-            const foundFish = await Fish.findById(req.params.fishId)
-            if (!foundFish) return next()
-            return res.render('fish/show', { fish: foundFish })
-        } else {
-            next()
-        }      
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('<h1>An error occurred</h1>')        
-    }
-})
-
-//Edit page
-app.get('/fish/:fishId/edit', async (req, res) => {
-    try {
-        const foundFish = await Fish.findById(req.params.fishId)
-        return res.render('fish/edit', {
-            fish: foundFish
-        })
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('An error occurred')
-    }
-})
-
-
-
-// * -- Update route
-
-app.put('/fish/:fishId', async (req, res) => {
-    try {
-        req.body.isCarnivorous = !!req.body.isCarnivorous
-        req.body.temperature = Number(req.body.temperature)
-        const foundFish = await Fish.findByIdAndUpdate(req.params.fishId, req.body)
-        return res.redirect(`/fish/${req.params.fishId}`)
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('An error has occurred')
-    }
-})
-
-// * -- Delete route
-
-app.delete('/fish/:fishId', async (req, res) => {
-    try {
-        await Fish.findByIdAndDelete(req.params.fishId)
-        return res.redirect('/fish')
-    } catch (error) {
-        console.log(error)
-        return res.status(500).send('An error occurred')
-    }
-})
-
+// * -- Routers
+app.use('/fish', fishRouter)
+app.use('/auth', authRouter)
 
 // ! -- 404 error handlers
 
