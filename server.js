@@ -3,7 +3,11 @@ const morgan = require('morgan')
 const mongoose = require('mongoose')
 const methodOverride = require('method-override')
 const session = require('express-session')
+const MongoStore = require('connect-mongo')
 require('dotenv/config')
+
+const isSignedIn = require('./middleware/is-signed-in.js')
+const passUserToView = require('./middleware/pass-user-to-view.js')
 
 // ! -- Variables
 
@@ -30,25 +34,23 @@ app.use(
         secret: process.env.SESSION_SECRET,
         resave: false,
         saveUninitialized: true,
+        store: MongoStore.create({
+            mongoUrl: process.env.MONGODB_URI
+        })
     })
 )
+app.use(passUserToView)
 
 // ! -- Route handlers
 
 // * -- Landing page
 app.get('/', (req, res) => {
-    res.render('index', {
-        user: req.session.user
-    })
+    res.render('index')
 })
 
 // * -- VIP fish shop
-app.get('/fish-shop', (req, res) => {
-    if (req.session.user) {
-        res.send(`${req.session.user.username}, check out our fish for sale!`)
-    } else {
-        res.send('Sorry, you need to register to view this content.')
-    }
+app.get('/fish-shop', isSignedIn, (req, res) => {
+    res.send(`${req.session.user.username}, check out our fish for sale!`)
 })
 
 // * -- Routers

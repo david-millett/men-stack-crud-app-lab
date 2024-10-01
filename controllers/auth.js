@@ -28,10 +28,14 @@ router.post('/sign-up', async (req, res) => {
         //attempt to create user
         const newUser = await User.create(req.body)
 
-        //redirect to sign-in page
-        return res.redirect('/auth/sign-in')
-
         //automatically sign them in
+         req.session.user = {
+            username: newUser.username,
+            _id: newUser._id,
+        }
+        return req.session.save(() => {
+            res.redirect('/')
+        })
 
     } catch (error) {
         console.log(error)
@@ -72,7 +76,9 @@ router.post('/sign-in', async (req, res) => {
             username: userInDatabase.username,
             _id: userInDatabase._id,
         }
-        return res.redirect('/')
+        return req.session.save(() => {
+            res.redirect('/')
+        })
 
     } catch (error) {
         console.log(error)
@@ -83,8 +89,9 @@ router.post('/sign-in', async (req, res) => {
 // * -- Sign out user
 
 router.get('/sign-out', (req, res) => {
-    req.session.destroy()
-    res.redirect('/')
+    req.session.destroy(() => {
+        res.redirect('/')
+    })
 })
 
 // ! -- Export the router
