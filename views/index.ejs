@@ -7,6 +7,8 @@
     <title>Fish app</title>
 </head>
 <body>
+    <%- include('./partials/_navbar') %>
+
     <% if (user) { %>
         <h1>Welcome to the fish app, <%= user.username %></h1>
     <% } else { %>

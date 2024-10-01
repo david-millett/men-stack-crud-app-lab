@@ -6,6 +6,7 @@ const router = express.Router()
 
 // ! -- Model
 const Fish = require('../models/fish.js')
+const isSignedIn = require('../middleware/is-signed-in.js')
 
 //! -- Routes
 
@@ -25,7 +26,7 @@ router.get('/', async (req, res) => {
 })
 
 //New page (form page)
-router.get('/new', (req, res) => {
+router.get('/new', isSignedIn, (req, res) => {
     res.render('fish/new')
 })
 
@@ -33,7 +34,7 @@ router.get('/new', (req, res) => {
 router.get('/:fishId', async (req, res, next) => {
     try {
         if (mongoose.Types.ObjectId.isValid(req.params.fishId)) {
-            const foundFish = await Fish.findById(req.params.fishId)
+            const foundFish = await Fish.findById(req.params.fishId).populate('owner')
             if (!foundFish) return next()
             return res.render('fish/show', { fish: foundFish })
         } else {
@@ -46,9 +47,14 @@ router.get('/:fishId', async (req, res, next) => {
 })
 
 //Edit page
-router.get('/:fishId/edit', async (req, res) => {
+router.get('/:fishId/edit', isSignedIn, async (req, res) => {
     try {
         const foundFish = await Fish.findById(req.params.fishId)
+
+        if (!foundFish.owner.equals(req.session.user._id)) {
+            return res.redirect(`/fish/${req.params.fishId}`)
+        }
+
         return res.render('fish/edit', {
             fish: foundFish
         })
@@ -60,7 +66,7 @@ router.get('/:fishId/edit', async (req, res) => {
 
 // * -- Create route
 
-router.post('/', async (req, res) => {
+router.post('/', isSignedIn, async (req, res) => {
     try {
         if (req.body.isCarnivorous) {
             req.body.isCarnivorous = true
@@ -68,6 +74,7 @@ router.post('/', async (req, res) => {
             req.body.isCarnivorous = false
         }
         req.body.temperature = Number(req.body.temperature)
+        req.body.owner = req.session.user._id //Add the owner ObjectId using the authenticated user's _id (from the session)
         await Fish.create(req.body)
         return res.redirect('/fish')
     } catch (error) {
@@ -79,12 +86,17 @@ router.post('/', async (req, res) => {
 
 // * -- Update route
 
-router.put('/:fishId', async (req, res) => {
+router.put('/:fishId', isSignedIn, async (req, res) => {
     try {
-        req.body.isCarnivorous = !!req.body.isCarnivorous
-        req.body.temperature = Number(req.body.temperature)
-        const foundFish = await Fish.findByIdAndUpdate(req.params.fishId, req.body)
-        return res.redirect(`/fish/${req.params.fishId}`)
+        const fishToUpdate = await Fish.findById(req.params.fishId)
+        if (fishToUpdate.owner.equals(req.session.user._id)) {
+            req.body.isCarnivorous = !!req.body.isCarnivorous
+            req.body.temperature = Number(req.body.temperature)
+            await Fish.findByIdAndUpdate(req.params.fishId, req.body)
+            return res.redirect(`/fish/${req.params.fishId}`)
+        }
+        throw new Error('User is not authorised to perform this action.')
+       
     } catch (error) {
         console.log(error)
         return res.status(500).send('An error has occurred')
@@ -93,10 +105,16 @@ router.put('/:fishId', async (req, res) => {
 
 // * -- Delete route
 
-router.delete('/:fishId', async (req, res) => {
+router.delete('/:fishId', isSignedIn, async (req, res) => {
     try {
-        await Fish.findByIdAndDelete(req.params.fishId)
-        return res.redirect('/fish')
+        const fishToDelete = await Fish.findById(req.params.fishId)
+
+        if (fishToDelete.owner.equals(req.session.user._id)) {
+            await Fish.findByIdAndDelete(req.params.fishId)
+            return res.redirect('/fish')
+        }
+        throw new Error('User is not authorised to perform this action.')
+        
     } catch (error) {
         console.log(error)
         return res.status(500).send('An error occurred')

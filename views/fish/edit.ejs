@@ -7,6 +7,7 @@
     <title>Edit <%= fish.name %></title>
   </head>
   <body>
+    <%- include('../partials/_navbar') %>
     <h1>Edit <%= fish.name %></h1>
     <form action="/fish/<%= fish._id %>?_method=PUT" method="POST">
         <label for="name">Name:</label>
