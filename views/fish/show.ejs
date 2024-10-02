@@ -21,14 +21,25 @@
         <p>It should be safe to stock with other fish.</p>
     <% } %>
 
-    <% if (fish.owner._id.equals(user._id)) { %>
+    <% if (user && fish.owner._id.equals(user._id)) { %>
       <form action="/fish/<%= fish._id %>?_method=DELETE" method="POST">
         <button type="submit">Delete <%= fish.name %></button>
       </form>
       <a href="/fish/<%= fish._id %>/edit">Edit <%= fish.name %></a>
     <% } %>
       
-    
+    <h2>Comments</h2>
+
+    <% if (user) { %>
+      <form action="/fish/<%= fish._id %>/comments" method="POST">
+        <label for="text">Say something about this fish:</label>
+        <input type="text" name="text" id="text" />
+        <button type="submit">Add comment</button>
+      </form>
+    <% } else { %>
+      <p><a href="/auth/sign-in">Sign in</a> to leave a comment</p>
+    <% } %>
+
     
     
     <a href="/fish">Back to fish</a>

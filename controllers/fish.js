@@ -121,4 +121,37 @@ router.delete('/:fishId', isSignedIn, async (req, res) => {
     }
 })
 
+// ! -- Comments sections
+
+// * -- Create comment
+
+router.post('/:fishId/comments', async (req, res, next) => {
+    try {
+        
+        //Add signed in user id to the user field
+        req.body.user = req.session.user._id
+
+        //Find the fish that we want to add the comment to
+        const fish = await Fish.findById(req.params.fishId)
+        if (!fish) return next()
+
+        //Push the req.body (new comment) into the comments array
+        fish.comments.push(req.body)
+
+        //Need tp save the fish we just added the comment to
+        await fish.save()
+
+        return res.redirect(`/fish/${req.params.fishId}`)
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error occurred')
+    }
+})
+
+
+// * -- Delete comment
+
+
+
 module.exports = router
