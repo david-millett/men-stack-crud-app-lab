@@ -9,6 +9,8 @@ require('dotenv/config')
 const isSignedIn = require('./middleware/is-signed-in.js')
 const passUserToView = require('./middleware/pass-user-to-view.js')
 
+const User = require('./models/user.js')
+
 // ! -- Variables
 
 const app = express()
@@ -40,6 +42,12 @@ app.use(
     })
 )
 app.use(passUserToView)
+// app.use(async (req, res, next) => {
+//     const user = await User.findById(req.session.user._id)
+//     req.session.destroy(() => {
+//         next()
+//     })
+// })
 
 // ! -- Route handlers
 

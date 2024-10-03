@@ -34,7 +34,8 @@ router.get('/new', isSignedIn, (req, res) => {
 router.get('/:fishId', async (req, res, next) => {
     try {
         if (mongoose.Types.ObjectId.isValid(req.params.fishId)) {
-            const foundFish = await Fish.findById(req.params.fishId).populate('owner')
+            const foundFish = await Fish.findById(req.params.fishId).populate('owner').populate('comments.user')
+            console.log(foundFish)
             if (!foundFish) return next()
             return res.render('fish/show', { fish: foundFish })
         } else {
@@ -138,7 +139,7 @@ router.post('/:fishId/comments', async (req, res, next) => {
         //Push the req.body (new comment) into the comments array
         fish.comments.push(req.body)
 
-        //Need tp save the fish we just added the comment to
+        //Need to save the fish we just added the comment to
         await fish.save()
 
         return res.redirect(`/fish/${req.params.fishId}`)
@@ -152,6 +153,28 @@ router.post('/:fishId/comments', async (req, res, next) => {
 
 // * -- Delete comment
 
+router.delete('/:fishId/comments/:commentId', async (req, res, next) => {
+    try {
+        const fish = await Fish.findById(req.params.fishId)
+        if (!fish) return next()
 
+        //Locate comment to delete
+        const commentToDelete = fish.comments.id(req.params.commentId)
+        if (!commentToDelete) return next()
+        
+        //Delete comment
+        commentToDelete.deleteOne()
+
+        // Persist changes to database
+        await fish.save()
+
+        //Redirect back to show page
+        return res.redirect(`/fish/${req.params.fishId}`)
+
+    } catch (error) {
+        console.log(error)
+        return res.status(500).send('An error has occurred')
+    }
+})
 
 module.exports = router
